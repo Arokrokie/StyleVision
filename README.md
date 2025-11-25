@@ -54,9 +54,9 @@ Environment variables
 
 Notes about models, large dependencies, and deployment
 
-- This project can use heavy ML libraries (PyTorch, torchvision, bitsandbytes, triton). Those packages may require GPU/CUDA or large native wheels that are unsuitable for small CPU hosts.
-- To deploy on CPU-only hosts (Render, Heroku, etc.), prefer pre-installing CPU-compatible PyTorch wheels or trimming GPU-only packages. See the Deploy section below.
-- Do NOT commit your `venv/` or any large model binaries to the repository. Use Git LFS or external object storage for model weights.
+- The runtime now only needs PyTorch/torchvision (for the SegFormer model) plus Hugging Face `transformers`. Install CPU wheels manually so pip does not attempt CUDA builds.
+- No local Stable Diffusion or diffusers pipelines run anymore; hairstyle generation flows exclusively through the Replicate API, so there are no extra ML downloads beyond SegFormer.
+- Do NOT commit your `venv/` or any large model caches to the repository. Use Git LFS or external object storage if you need to persist downloaded weights.
 
 Deploying to Render (CPU instance)
 
@@ -79,12 +79,12 @@ gunicorn hair_project.wsgi --bind 0.0.0.0:$PORT
 
 If you need GPU acceleration
 
-- Render's standard instances are CPU-only. For GPU workloads you must deploy to a provider that offers GPU instances (AWS/GCP/Azure, Paperspace, Gradient, or a Render GPU plan if available). Maintain a `requirements.gpu.txt` with your GPU-only packages and install it on GPU hosts.
+- Render's standard instances are CPU-only. For GPU workloads you must deploy to a provider that offers GPU instances (AWS/GCP/Azure, Paperspace, Gradient, or a Render GPU plan if available). If you restore optional GPU-only packages (diffusers, bitsandbytes, etc.), manage them via a separate `requirements.gpu.txt`.
 
 Recommended additional files
 
-- `requirements.cpu.txt` — minimal dependencies safe for CPU hosts.
-- `requirements.gpu.txt` — full dependencies including `bitsandbytes`, `triton`, and other GPU-specific libs.
+- `requirements.cpu.txt` — mirrors `requirements.txt`; keep it if you want a clearly named CPU-only lockfile.
+- `requirements.gpu.txt` — only necessary if you reintroduce GPU-specific libraries.
 
 Troubleshooting
 
