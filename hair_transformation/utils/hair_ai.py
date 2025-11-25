@@ -1,15 +1,32 @@
 import os
 import uuid
-import torch
 import numpy as np
 from PIL import Image, ImageOps
-import cv2
 import requests
 from io import BytesIO
 from sklearn.cluster import KMeans
 import warnings
 import logging
 import gc
+
+# Heavy native/ML imports — wrap in try/except so the module can be imported
+# on CPU-only or minimal hosts without crashing the WSGI process.
+try:
+    import torch
+except Exception:
+    torch = None
+
+try:
+    import cv2
+except Exception:
+    cv2 = None
+
+try:
+    # transformers imports can be large and may fail if native deps aren't present
+    from transformers import AutoImageProcessor, AutoModelForSemanticSegmentation
+except Exception:
+    AutoImageProcessor = None
+    AutoModelForSemanticSegmentation = None
 
 # Django imports
 from django.core.files.base import ContentFile
