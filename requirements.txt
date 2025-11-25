@@ -1,10 +1,7 @@
 ### requirements.txt (SegFormer + Replicate only)
 ## Minimal stack: Django runtime + SegFormer (transformers/torch) + Replicate helpers.
-## Install CPU torch/torchvision wheels before this file to avoid CUDA downloads.
-## Example build command (Render):
-## pip install -U pip
-## pip install "torch==2.9.0+cpu" "torchvision==0.24.0+cpu" -f https://download.pytorch.org/whl/torch_stable.html
-## pip install -r requirements.txt
+## Force the PyTorch CPU wheel index so deployments don't grab CUDA packages.
+--extra-index-url https://download.pytorch.org/whl/torch_stable.html
 
 # Core web/runtime
 Django==4.2.7
@@ -29,5 +26,4 @@ torchvision==0.24.0
 requests==2.32.5
 python-dotenv==1.0.0
 
-# Torch/torchvision pull CPU wheels when PIP_EXTRA_INDEX_URL includes
-# https://download.pytorch.org/whl/torch_stable.html (see README).
+# Torch/torchvision resolve to CPU wheels because of the extra index above.
