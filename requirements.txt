@@ -1,7 +1,7 @@
 ### requirements.txt (SegFormer + Replicate only)
 ## Minimal stack: Django runtime + SegFormer (transformers/torch) + Replicate helpers.
 ## Force the PyTorch CPU wheel index so deployments don't grab CUDA packages.
---extra-index-url https://download.pytorch.org/whl/torch_stable.html
+--extra-index-url https://download.pytorch.org/whl/cpu
 
 # Core web/runtime
 Django==4.2.7
@@ -19,8 +19,8 @@ opencv-python==4.12.0.88
 transformers==4.57.2
 safetensors==0.7.0
 scikit-learn==1.6.1
-torch==2.9.0
-torchvision==0.24.0
+torch==2.9.0+cpu
+torchvision==0.24.0+cpu
 
 # Networking / helpers
 requests==2.32.5

@@ -31,7 +31,7 @@ python -m venv .venv
 # or on Unix: source .venv/bin/activate
 ```
 
-2. Upgrade pip and install dependencies (the requirements file already injects the PyTorch CPU wheel index, so no extra env vars are needed):
+2. Upgrade pip and install dependencies (CPU-only PyTorch wheels are enforced inside `requirements.txt`):
 
 ```powershell
 pip install -U pip
@@ -55,10 +55,10 @@ Environment variables
 
 Notes about models, large dependencies, and deployment
 
-- The runtime now only needs PyTorch/torchvision (for the SegFormer model) plus Hugging Face `transformers`. `requirements.txt` already adds the PyTorch CPU wheel index to avoid CUDA downloads on hosts like Render.
+- The runtime now only needs PyTorch/torchvision (for the SegFormer model) plus Hugging Face `transformers`. `requirements.txt` forces the PyTorch CPU wheel index so hosts like Render/Heroku don't accidentally pull CUDA builds.
 - A copy of the SegFormer weights lives in `segformer_b2_clothes/`. The loader attempts that folder first (or the path in `SEGFORMER_MODEL_PATH`) before falling back to Hugging Face, eliminating cold-start downloads on Render.
 - No local Stable Diffusion or diffusers pipelines run anymore; hairstyle generation flows exclusively through the Replicate API, so there are no extra ML downloads beyond SegFormer.
-- When deploying to Render (or any host that uses only PyPI), no extra configuration is required—the `--extra-index-url` line in `requirements.txt` ensures `torch==2.9.0` / `torchvision==0.24.0` resolve to CPU wheels.
+- When deploying to Render, Heroku, etc., no extra configuration is required—the `--extra-index-url` line in `requirements.txt` ensures `torch==2.9.0+cpu` / `torchvision==0.24.0+cpu` resolve to CPU wheels.
 - Do NOT commit your `venv/` or any large model caches to the repository. Use Git LFS or external object storage if you need to persist downloaded weights.
 
 Deploying to Render (CPU instance)
