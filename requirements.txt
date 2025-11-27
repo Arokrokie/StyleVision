@@ -1,5 +1,26 @@
+# Core Django
 Django==5.2.7
 gunicorn==21.2.0
 whitenoise==6.11.0
-Pillow==10.4.0
 python-dotenv==1.2.1
+dj-database-url==3.0.1
+psycopg2-binary==2.9.11
+
+# Django Extensions
+django-crispy-forms==2.5
+crispy-bootstrap5==2025.6
+
+# Image Processing
+Pillow==10.4.0
+opencv-python-headless==4.12.0.88
+numpy==2.2.6
+
+# ML/AI Dependencies (CPU-only for Azure)
+torch==2.9.0
+torchvision==0.24.0
+transformers==4.57.2
+safetensors==0.7.0
+scikit-learn==1.6.1
+
+# HTTP Requests
+requests==2.32.5

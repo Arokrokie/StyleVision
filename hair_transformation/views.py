@@ -10,6 +10,7 @@ import json
 
 from .forms import ImageUploadForm
 from .models import HairTransformation, TransformationResult
+from .utils.hair_ai import DjangoHairTransformation
 import threading
 
 
@@ -56,24 +57,7 @@ class ProcessingView(View):
                 )
 
             # Otherwise, kick off background processing and render the processing page immediately
-            try:
-                # Import heavy ML processor lazily so the app can start on hosts
-                # without ML dependencies installed. If import fails, return
-                # a helpful error page instead of crashing the WSGI process.
-                from .utils.hair_ai import DjangoHairTransformation
-
-                processor = DjangoHairTransformation()
-            except Exception as e:
-                return render(
-                    request,
-                    "hair_transformation/error.html",
-                    {
-                        "error": (
-                            "Server error: ML backend not available. "
-                            f"Details: {str(e)}"
-                        )
-                    },
-                )
+            processor = DjangoHairTransformation()
 
             # mark as starting
             hair_transformation.progress = 1
@@ -300,15 +284,4 @@ class AjaxProcessingView(View):
                 }
             )
         except HairTransformation.DoesNotExist:
-            # Return a JSON payload (200) rather than an HTTP 404 so the
-            # client-side polling can handle a missing session gracefully
-            # without producing noisy 404 logs in the server.
-            return JsonResponse(
-                {
-                    "processed": False,
-                    "status": "not_found",
-                    "progress": 0,
-                    "error": "Session not found",
-                },
-                status=200,
-            )
+            return JsonResponse({"error": "Session not found"}, status=404)
