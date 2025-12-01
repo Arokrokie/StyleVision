@@ -2,7 +2,7 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
 
-name: Build and deploy Python app to Azure Web App - stylevision
+name: Build and deploy Python app to Azure Web App - StyleVision
 
 on:
   push:
@@ -63,14 +63,14 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_0615A79EF28149A787788C63C34E7C25 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_22088B6124994E15BFC0C0A0AF5BBA75 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B3C7B919C55F41E6AF84F340229DFD71 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B504D9D76CD84DCC8538877F602D0F32 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_568508791B144D51951A168C6A2DA066 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B0558526FB1F4512A6CB1F41AA70773F }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'stylevision'
+          app-name: 'StyleVision'
           slot-name: 'Production'
           
