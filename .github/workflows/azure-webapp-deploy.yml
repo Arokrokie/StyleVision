@@ -29,6 +29,22 @@ jobs:
         run: |
           python manage.py collectstatic --noinput
 
+      - name: Validate deployment credentials
+        env:
+          PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          AZ_CRED: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          if [ -z "$PUBLISH_PROFILE" ] && [ -z "$AZ_CRED" ]; then
+            echo "ERROR: No Azure credentials found. Set either AZURE_WEBAPP_PUBLISH_PROFILE or AZURE_CREDENTIALS in repository secrets.";
+            exit 1;
+          fi
+
+      - name: Azure Login (service principal)
+        if: ${{ secrets.AZURE_CREDENTIALS != '' }}
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
