@@ -38,7 +38,12 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
 
 # Allow hosts to be set via environment variable (comma-separated)
-ALLOWED_HOSTS = ["*"]
+_env_allowed = os.environ.get("ALLOWED_HOSTS", None)
+if _env_allowed:
+    ALLOWED_HOSTS = [h.strip() for h in _env_allowed.split(",") if h.strip()]
+else:
+    # default to permissive for simple deploy; recommend setting ALLOWED_HOSTS in production
+    ALLOWED_HOSTS = ["*"]
 
 # Security settings for production
 if not DEBUG:
@@ -162,11 +167,24 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, "hair_transformation", "static")]
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+# Ensure staticfiles directory exists for collectstatic on platforms like Azure
+os.makedirs(STATIC_ROOT, exist_ok=True)
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Ensure media directory exists
 os.makedirs(MEDIA_ROOT, exist_ok=True)
+
+# When deployed behind a proxy (eg. Azure App Service), respect the X-Forwarded-Proto
+# and set secure cookie flags in production
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # Build CSRF trusted origins from ALLOWED_HOSTS (skip wildcard)
+    CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in ALLOWED_HOSTS if h and h != "*"]
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB

@@ -1,6 +1,11 @@
 import os
 import uuid
-import torch
+
+try:
+    import torch
+except Exception:
+    # Allow the module to work in constrained environments where torch isn't installed
+    torch = None
 import numpy as np
 from PIL import Image, ImageOps
 import cv2
@@ -158,7 +163,7 @@ class SkinToneAwareHairTransformation:
 
             # Clear CUDA memory if available
             try:
-                if torch.cuda.is_available():
+                if torch is not None and torch.cuda.is_available():
                     torch.cuda.empty_cache()
             except Exception:
                 pass
@@ -1714,7 +1719,28 @@ class SkinToneAwareHairTransformation:
 
 class DjangoHairTransformation:
     def __init__(self):
-        self.transformer = SkinToneAwareHairTransformation(use_hairstyle_ai=True)
+        # Allow disabling heavy hairstyle AI models in constrained environments
+        # (e.g., Azure App Service without GPU or when you want to avoid large model downloads)
+        disable_ai = os.environ.get("DISABLE_HAIRSTYLE_AI", "False").lower() in (
+            "1",
+            "true",
+            "yes",
+        )
+
+        # If the environment requests disabling AI, or torch is missing, disable hairstyle AI
+        use_hairstyle = not disable_ai
+        try:
+            # If torch isn't available, force disable
+            import torch as _torch
+
+            # If torch is present but no CPU/CUDA available, still allow CPU but be conservative
+            # (user can enable via env vars if desired)
+        except Exception:
+            use_hairstyle = False
+
+        self.transformer = SkinToneAwareHairTransformation(
+            use_hairstyle_ai=use_hairstyle
+        )
 
     def process_image(self, image_path, session_id):
         """
@@ -1745,7 +1771,7 @@ class DjangoHairTransformation:
                 return None
 
             # Convert results to Django-compatible format
-            django_results = { = {
+            django_results = {
                 "original_image": results["original_image"],
                 "analysis_data": {
                     "skin_tone": results["skin_analysis"]["skin_tone"],
