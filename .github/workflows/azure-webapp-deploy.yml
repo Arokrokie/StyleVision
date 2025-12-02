@@ -10,8 +10,13 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      # Remove AZURE_CREDENTIALS from env if you're using publish profile
+      AZURE_WEBAPP_PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+      AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -25,38 +30,14 @@ jobs:
 
       - name: Collect static files
         env:
-          DJANGO_SETTINGS_MODULE: hair_project.settings
+          DJANGO_SETTINGS_MODULE: hair_project.settings # Update with your project name
         run: |
           python manage.py collectstatic --noinput
 
-      - name: Validate deployment credentials
-        env:
-          PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          AZ_CRED: ${{ secrets.AZURE_CREDENTIALS }}
-        run: |
-          if [ -z "$PUBLISH_PROFILE" ] && [ -z "$AZ_CRED" ]; then
-            echo "ERROR: No Azure credentials found. Set either AZURE_WEBAPP_PUBLISH_PROFILE or AZURE_CREDENTIALS in repository secrets.";
-            exit 1;
-          fi
-
-      - name: Azure Login (service principal)
-        if: ${{ secrets.AZURE_CREDENTIALS != '' }}
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      # Remove the validation step - it's not needed
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          # Ensure we don't deploy a committed virtualenv or packaged tarball.
-          # Remove common artifacts that cause binary/python-version mismatches
-          # before packaging the app for deployment.
-          package: .
-
-      - name: Clean venv and deployment artifacts (post-build)
-        if: always()
-        run: |
-          rm -rf antenv output.tar.gz || true
-          echo "Cleaned antenv and output.tar.gz"
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ env.AZURE_WEBAPP_PUBLISH_PROFILE }}

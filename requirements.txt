@@ -1,21 +1,21 @@
-# Core Django
-Django==5.2.7
+# Core production-ready packages (edit versions as needed)
+Django>=4.2
 gunicorn==21.2.0
-whitenoise==6.11.0
-python-dotenv==1.2.1
-dj-database-url==3.0.1
-psycopg2-binary==2.9.11
+whitenoise==6.5.0
+psycopg2-binary==2.9.9  # For PostgreSQL
+python-dotenv==1.0.0  # For environment variables
+django-cors-headers==4.2.0  # If using APIs
+# Add your other packages here
 
-# Django Extensions
+# Additional project packages (kept from previous requirements)
+dj-database-url==3.0.1
 django-crispy-forms==2.5
 crispy-bootstrap5==2025.6
-
-# Image Processing
 Pillow==10.4.0
 opencv-python-headless==4.12.0.88
 numpy==2.2.6
 
-# ML/AI Dependencies (CPU-only for Azure)
+# ML/AI Dependencies (may be large for deployment; review for Azure)
 torch==2.9.0
 torchvision==0.24.0
 transformers==4.57.2

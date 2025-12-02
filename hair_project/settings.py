@@ -29,21 +29,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from a .env file at project root (optional)
 load_dotenv(BASE_DIR / ".env")
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# SECURITY
+# Use a dedicated env var name for clarity in hosting platforms
 SECRET_KEY = os.environ.get(
-    "SECRET_KEY", "django-insecure-fallback-secret-for-dev-only"
+    "DJANGO_SECRET_KEY",
+    os.environ.get("SECRET_KEY", "django-insecure-fallback-secret-for-dev-only"),
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
 
 # Allow hosts to be set via environment variable (comma-separated)
-_env_allowed = os.environ.get("ALLOWED_HOSTS", None)
-if _env_allowed:
-    ALLOWED_HOSTS = [h.strip() for h in _env_allowed.split(",") if h.strip()]
-else:
-    # default to permissive for simple deploy; recommend setting ALLOWED_HOSTS in production
-    ALLOWED_HOSTS = ["*"]
+_env_allowed = os.environ.get("ALLOWED_HOSTS", "")
+ALLOWED_HOSTS = [h.strip() for h in _env_allowed.split(",") if h.strip()]
+ALLOWED_HOSTS.extend([".azurewebsites.net", "localhost", "127.0.0.1"])  # common hosts
 
 # Security settings for production
 if not DEBUG:
@@ -64,9 +63,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "whitenoise.runserver_nostatic",
     "hair_transformation",
     "crispy_forms",
     "crispy_bootstrap5",
+    # add other apps here
 ]
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
@@ -105,26 +106,30 @@ TEMPLATES = [
 WSGI_APPLICATION = "hair_project.wsgi.application"
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# Database: prefer explicit DB_* env vars (Postgres), fall back to DATABASE_URL, else SQLite
+if "DB_HOST" in os.environ:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME", ""),
+            "USER": os.environ.get("DB_USER", ""),
+            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+            "HOST": os.environ.get("DB_HOST", ""),
+            "PORT": os.environ.get("DB_PORT", "5432"),
+            "OPTIONS": {"sslmode": "require"},
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
-# If a DATABASE_URL env var is provided (e.g. Postgres on Azure), use it
 DATABASE_URL = os.environ.get("DATABASE_URL")
-if DATABASE_URL:
-    if dj_database_url:
-        DATABASES["default"] = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-    else:
-        raise ImportError(
-            "DATABASE_URL is set but the 'dj-database-url' package is not installed. "
-            "Install it with: pip install dj-database-url"
-        )
+if DATABASE_URL and dj_database_url and (not "DB_HOST" in os.environ):
+    DATABASES["default"] = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
 
 
 # Password validation
@@ -162,8 +167,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "/static/"
-# Include the app-level static folder so the dev server can find images we added
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "hair_transformation", "static")]
+# Local app static plus project-level static
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "hair_transformation", "static"),
+    os.path.join(BASE_DIR, "static"),
+]
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
@@ -181,8 +189,13 @@ os.makedirs(MEDIA_ROOT, exist_ok=True)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 if not DEBUG:
+    SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
     # Build CSRF trusted origins from ALLOWED_HOSTS (skip wildcard)
     CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in ALLOWED_HOSTS if h and h != "*"]
 
